@@ -2,7 +2,6 @@ import asyncio
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 import pandas as pd
 import gspread
-import time
 import datetime
 import os
 import shutil
@@ -34,19 +33,19 @@ async def get_data(page, download_dir):
         await page.wait_for_load_state("networkidle", timeout=10000)
 
         # Clica no botão de exportar
-        await page.locator('/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div/div/span/span/button').click()
+        await page.locator('xpath=/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div/div/span/span/button').click()
         await page.wait_for_timeout(5000)
 
         # Seleciona a primeira opção
-        await page.wait_for_selector('/html/body/div[4]/ul/li[1]/span/div/div/span', timeout=5000)
-        await page.click('/html/body/div[4]/ul/li[1]/span/div/div/span')
+        await page.wait_for_selector('xpath=/html/body/div[4]/ul/li[1]/span/div/div/span', timeout=5000)
+        await page.click('xpath=/html/body/div[4]/ul/li[1]/span/div/div/span')
 
         # Vai para o Task Center
         await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
         await page.wait_for_load_state("networkidle", timeout=10000)
 
         # Botão de download
-        download_button = page.locator('//*[@id="fms-container"]/div[2]/div[2]/div/div/div/div[1]/div[8]/div/div[1]/div/div[2]/div[1]/div[1]/div[2]/div/div/div/table/tbody[2]/tr[1]/td[7]/div/div/button')
+        download_button = page.locator('xpath=//*[@id="fms-container"]/div[2]/div[2]/div/div/div/div[1]/div[8]/div/div[1]/div/div[2]/div[1]/div[1]/div[2]/div/div/div/table/tbody[2]/tr[1]/td[7]/div/div/button')
         if await download_button.count() == 0:
             raise ValueError("[DOWNLOAD] Botão de download não encontrado")
 
