@@ -27,57 +27,6 @@ async def login(page):
         print(f"Erro no login: {e}")
         raise
 
-python
-
-Recolher
-
-Encapsular
-
-Executar
-
-Copiar
-import asyncio
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
-import pandas as pd
-import gspread
-from google.oauth2.service_account import Credentials
-import os
-import time
-import datetime
-import shutil
-from dotenv import load_dotenv
-
-# Load environment variables for credentials
-load_dotenv()
-
-async def login(page):
-    try:
-        await page.goto("https://spx.shopee.com.br/")
-        await page.wait_for_load_state("networkidle", timeout=15000)
-
-        # Fill login form
-        await page.wait_for_selector('input[placeholder="Ops ID"]', timeout=15000)
-        await page.fill('input[placeholder="Ops ID"]', os.getenv("SHOPEE_OPS_ID", "Ops35683"))
-        await page.fill('input[placeholder="Senha"]', os.getenv("SHOPEE_PASSWORD", "@Shopee123"))
-        await page.click('._tYDNB')  # Keep original class selector
-        await page.wait_for_load_state("networkidle", timeout=15000)
-
-        # Handle potential pop-up
-        try:
-            await page.wait_for_selector('.ssc-dialog-close', timeout=10000)
-            await page.click('.ssc-dialog-close')
-        except PlaywrightTimeoutError:
-            print("No pop-up found, attempting Escape key.")
-            await page.keyboard.press("Escape")
-
-        print("Login successful.")
-    except PlaywrightTimeoutError as e:
-        print(f"Timeout during login: {e}")
-        raise
-    except Exception as e:
-        print(f"Login error: {e}")
-        raise
-
 async def get_data(page, download_dir):
     try:
         os.makedirs(download_dir, exist_ok=True)
