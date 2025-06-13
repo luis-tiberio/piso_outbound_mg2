@@ -37,8 +37,8 @@ async def get_data(page, download_dir):
         await page.wait_for_timeout(5000)
 
         # Seleciona a primeira opção
-        await page.wait_for_selector('xpath=/html[1]/body[1]/div[8]/ul[1]/li[1]/span[1]/div[1]/div[1]/span[1]', timeout=5000)
-        await page.click('xpath=/html[1]/body[1]/div[8]/ul[1]/li[1]/span[1]/div[1]/div[1]/span[1]')
+        await page.wait_for_selector('xpath=//div[@class="ssc-react-tooltip-reference"]//span[contains(text(),"Exportar")]', timeout=15000)
+        await page.click('xpath=//div[@class="ssc-react-tooltip-reference"]//span[contains(text(),"Exportar")')
 
         # Vai para o Task Center
         await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
