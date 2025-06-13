@@ -119,7 +119,7 @@ async def main():
             #await get_data(page, download_dir)
             print("Chamando Selenium...")
             subprocess.run(["python", "download.py"])
-            update_packing_google_sheets()
+            update_packing_google_sheets(download_dir)
             print("Dados atualizados com sucesso.")
             await browser.close()
     except Exception as e:
