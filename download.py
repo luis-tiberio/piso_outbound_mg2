@@ -74,7 +74,7 @@ def get_data(driver):
         # 👉 Mantendo o botão de download exatamente como no seu código original:
         driver.find_element(
             By.XPATH,
-            '/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[1]/div[8]/div/div[1]/div/div[2]/div[1]/div[1]/div[2]/div/div/div/table/tbody[2]/tr[1]/td[7]/div/div/button/span'
+            '//tbody/tr[1]/td[7]/div[1]/div[1]/button[1]/span[1]/span[2]'
         ).click()
 
         time.sleep(15)  # Aguarda o download
