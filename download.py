@@ -65,8 +65,9 @@ def get_data(driver):
         time.sleep(8)
         driver.find_element(By.XPATH, '/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div/div/span/span/button').click()
         time.sleep(8)
-        driver.find_element(By.XPATH, '/html[1]/body[1]/div[3]/ul[1]/li[1]/span[1]/div[1]/div[1]/span[1]').click()
-        time.sleep(8)
+        WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.XPATH, '/html/body/div[4]/ul/li[1]/span/div/div/span'))
+        ).click()
 
         driver.get("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
         time.sleep(15)
