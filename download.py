@@ -8,19 +8,21 @@ import time
 import datetime
 import os
 import shutil
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 
+# Diretório de download para GitHub Actions
 download_dir = "/tmp"
+
+# Cria o diretório, se não existir
 os.makedirs(download_dir, exist_ok=True)
 
+# Configurações do Chrome para ambiente headless do GitHub Actions
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--window-size=1920,1080")
 
+# Configurações de download
 prefs = {
     "download.default_directory": download_dir,
     "download.prompt_for_download": False,
@@ -29,9 +31,8 @@ prefs = {
 }
 chrome_options.add_experimental_option("prefs", prefs)
 
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=chrome_options)
-
+# Inicializa o driver
+driver = webdriver.Chrome(options=chrome_options)
 
 def login(driver):
     driver.get("https://spx.shopee.com.br/")
@@ -62,16 +63,20 @@ def get_data(driver):
     try:
         driver.get("https://spx.shopee.com.br/#/staging-area-management/list/outbound")
         time.sleep(8)
-        driver.find_element(By.XPATH, '//*[@id="staging-area-management-list"]/div/div[2]/div[2]/div/div/div[2]/div/div/span/span/button/span').click()
+        driver.find_element(By.XPATH, '/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div/div/span/span/button').click()
         time.sleep(8)
-        driver.find_element(By.XPATH, '/html[1]/body[1]/div[4]/ul[1]/li[1]/span[1]/div[1]/div[1]/span[1]').click()
+        driver.find_element(By.XPATH, '/html[1]/body[1]/div[3]/ul[1]/li[1]/span[1]/div[1]/div[1]/span[1]').click()
         time.sleep(8)
 
         driver.get("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
         time.sleep(15)
 
         # 👉 Mantendo o botão de download exatamente como no seu código original:
-        driver.find_element(By.XPATH, '//tbody/tr[1]/td[7]/div[1]/div[1]/button[1]/span[1]/span[2]').click()
+        driver.find_element(
+            By.XPATH,
+            '/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[1]/div[8]/div/div[1]/div/div[2]/div[1]/div[1]/div[2]/div/div/div/table/tbody[2]/tr[1]/td[7]/div/div/button/span'
+        ).click()
+
         time.sleep(15)  # Aguarda o download
         rename_downloaded_file(download_dir)
 
