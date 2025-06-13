@@ -112,19 +112,17 @@ async def main():
     download_dir = "/tmp"
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=not bool(os.getenv("DEBUG_MODE", False)))
-            context = await browser.new_context(accept_downloads=True)
-            page = await context.new_page()
-
-            await login(page)
-            file_path = await get_data(page, download_dir)
-            update_packing_google_sheets(download_dir)
-
-            print("[SUCESSO] Processo completo.")
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+            #await login(page)
+            #await get_data(page, download_dir)
+            print("Chamando Selenium...")
+            subprocess.run(["python", "download.py"])
+            update_packing_google_sheets()
+            print("Dados atualizados com sucesso.")
             await browser.close()
     except Exception as e:
-        print(f"[MAIN] Erro geral no processo: {e}")
-        raise
+        print(f"Erro durante o processo: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())
