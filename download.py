@@ -8,7 +8,7 @@ import time
 import datetime
 import os
 import shutil
-from webdriver_manager.chrome import ChromeDriverManagerfrom selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
