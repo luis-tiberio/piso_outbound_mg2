@@ -8,6 +8,7 @@ import time
 import datetime
 import os
 import shutil
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Diretório de download para GitHub Actions
 download_dir = "/tmp"
@@ -32,7 +33,7 @@ prefs = {
 chrome_options.add_experimental_option("prefs", prefs)
 
 # Inicializa o driver
-driver = webdriver.Chrome(options=chrome_options)
+driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 
 def login(driver):
     driver.get("https://spx.shopee.com.br/")
