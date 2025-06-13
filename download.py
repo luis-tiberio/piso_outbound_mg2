@@ -8,22 +8,19 @@ import time
 import datetime
 import os
 import shutil
+from webdriver_manager.chrome import ChromeDriverManagerfrom selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Diretório de download para GitHub Actions
 download_dir = "/tmp"
-
-# Cria o diretório, se não existir
 os.makedirs(download_dir, exist_ok=True)
 
-# Configurações do Chrome para ambiente headless do GitHub Actions
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--window-size=1920,1080")
 
-# Configurações de download
 prefs = {
     "download.default_directory": download_dir,
     "download.prompt_for_download": False,
@@ -32,8 +29,9 @@ prefs = {
 }
 chrome_options.add_experimental_option("prefs", prefs)
 
-# Inicializa o driver
-driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
 
 def login(driver):
     driver.get("https://spx.shopee.com.br/")
