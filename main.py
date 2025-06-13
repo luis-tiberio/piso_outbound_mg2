@@ -6,6 +6,7 @@ import datetime
 import os
 import shutil
 from google.oauth2.service_account import Credentials
+import subprocess
 
 async def login(page):
     await page.goto("https://spx.shopee.com.br/")
