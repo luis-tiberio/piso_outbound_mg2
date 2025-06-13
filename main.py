@@ -1,14 +1,12 @@
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 import pandas as pd
 import gspread
 import time
 import datetime
 import os
 import shutil
-import subprocess
 from google.oauth2.service_account import Credentials
-from oauth2client.service_account import ServiceAccountCredentials
 
 async def login(page):
     await page.goto("https://spx.shopee.com.br/")
@@ -21,59 +19,63 @@ async def login(page):
         try:
             await page.click('.ssc-dialog-close', timeout=20000)
         except:
-            print("Nenhum pop-up foi encontrado.")
+            print("Nenhum pop-up foi encontrado. Tentando fechar com ESC.")
             await page.keyboard.press("Escape")
     except Exception as e:
-        print(f"Erro no login: {e}")
+        print(f"[LOGIN] Erro no login: {e}")
         raise
 
 async def get_data(page, download_dir):
     try:
         os.makedirs(download_dir, exist_ok=True)
 
-        # Navigate to outbound list
+        # Navega para a lista outbound
         await page.goto("https://spx.shopee.com.br/#/staging-area-management/list/outbound")
         await page.wait_for_load_state("networkidle", timeout=10000)
 
-        # Click export button (original XPath)
+        # Clica no botão de exportar
         await page.locator('/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div/div/span/span/button').click()
-        await page.wait_for_timeout(5000)  # Kept due to XPath dependency, but minimized
+        await page.wait_for_timeout(5000)
 
-        # Select first option (original XPath)
+        # Seleciona a primeira opção
         await page.wait_for_selector('/html/body/div[4]/ul/li[1]/span/div/div/span', timeout=5000)
         await page.click('/html/body/div[4]/ul/li[1]/span/div/div/span')
 
-        # Navigate to task center
+        # Vai para o Task Center
         await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
         await page.wait_for_load_state("networkidle", timeout=10000)
 
-        # Click download button (original XPath)
+        # Botão de download
         download_button = page.locator('//*[@id="fms-container"]/div[2]/div[2]/div/div/div/div[1]/div[8]/div/div[1]/div/div[2]/div[1]/div[1]/div[2]/div/div/div/table/tbody[2]/tr[1]/td[7]/div/div/button')
         if await download_button.count() == 0:
-            raise ValueError("Download button not found")
+            raise ValueError("[DOWNLOAD] Botão de download não encontrado")
 
-        # Handle download
+        # Espera e captura o download
         async with page.expect_download() as download_info:
             await download_button.click()
         download = await download_info.value
 
-        # Save and rename file
+        # Salva o arquivo
         file_path = os.path.join(download_dir, download.suggested_filename)
         await download.save_as(file_path)
+
+        # Renomeia com base na hora
         current_hour = datetime.datetime.now().strftime("%H")
         new_file_name = f"EXP-{current_hour}.csv"
         new_file_path = os.path.join(download_dir, new_file_name)
+
         if os.path.exists(new_file_path):
             os.remove(new_file_path)
+
         shutil.move(file_path, new_file_path)
-        print(f"File saved as: {new_file_path}")
+        print(f"[DOWNLOAD] Arquivo salvo como: {new_file_path}")
         return new_file_path
 
     except PlaywrightTimeoutError as e:
-        print(f"Timeout error in get_data: {e}")
+        print(f"[TIMEOUT] Erro de timeout em get_data: {e}")
         raise
     except Exception as e:
-        print(f"Error collecting data: {e}")
+        print(f"[ERRO] Falha ao coletar dados: {e}")
         raise
 
 def update_packing_google_sheets(download_dir):
@@ -82,29 +84,29 @@ def update_packing_google_sheets(download_dir):
         csv_file_name = f"EXP-{current_hour}.csv"
         csv_file_path = os.path.join(download_dir, csv_file_name)
         if not os.path.exists(csv_file_path):
-            raise FileNotFoundError(f"File {csv_file_path} not found")
+            raise FileNotFoundError(f"[ARQUIVO] Arquivo não encontrado: {csv_file_path}")
 
-        # Google Sheets authentication
+        # Autenticação com Google Sheets
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds = Credentials.from_service_account_file("hxh.json", scopes=scope)
         client = gspread.authorize(creds)
-        sheet = client.open_by_url(
-            "https://docs.google.com/spreadsheets/d/1hoXYiyuArtbd2pxMECteTFSE75LdgvA2Vlb6gPpGJ-g/edit?gid=0#gid=0"
-        )
+
+        sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1hoXYiyuArtbd2pxMECteTFSE75LdgvA2Vlb6gPpGJ-g/edit?gid=0#gid=0")
         worksheet = sheet.worksheet("Base SPX")
 
-        # Read and upload CSV
+        # Carrega CSV e envia
         df = pd.read_csv(csv_file_path)
-        df = df.fillna("")
+        df.fillna("", inplace=True)
         worksheet.clear()
         worksheet.update([df.columns.values.tolist()] + df.values.tolist())
-        print(f"File {csv_file_name} uploaded to Google Sheets successfully.")
+
+        print(f"[GOOGLE SHEETS] Upload do arquivo {csv_file_name} concluído com sucesso.")
 
     except FileNotFoundError as e:
-        print(f"File error: {e}")
+        print(f"[ERRO] Arquivo não encontrado: {e}")
         raise
     except Exception as e:
-        print(f"Error updating Google Sheets: {e}")
+        print(f"[ERRO] Falha ao atualizar o Google Sheets: {e}")
         raise
 
 async def main():
@@ -114,13 +116,15 @@ async def main():
             browser = await p.chromium.launch(headless=not bool(os.getenv("DEBUG_MODE", False)))
             context = await browser.new_context(accept_downloads=True)
             page = await context.new_page()
+
             await login(page)
             file_path = await get_data(page, download_dir)
             update_packing_google_sheets(download_dir)
-            print("Data updated successfully.")
+
+            print("[SUCESSO] Processo completo.")
             await browser.close()
     except Exception as e:
-        print(f"Main process error: {e}")
+        print(f"[MAIN] Erro geral no processo: {e}")
         raise
 
 if __name__ == "__main__":
