@@ -55,7 +55,7 @@ async def main():
             await page.wait_for_selector('//*[@placeholder="Ops ID"]', timeout=15000)
             await page.locator('//*[@placeholder="Ops ID"]').fill('Ops35683')
             await page.locator('//*[@placeholder="Senha"]').fill('@Shopee123')
-            await page.locator('/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/form/div/div/button/div').click()
+            await page.locator('xpath=/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/form/div/div/button/div').click()
             await page.wait_for_timeout(15000)
             try:
                 await page.locator('.ssc-dialog-close').click(timeout=5000)
