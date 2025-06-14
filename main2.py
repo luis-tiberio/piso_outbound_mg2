@@ -1,0 +1,104 @@
+import asyncio
+from playwright.async_api import async_playwright
+import time
+import datetime
+import os
+import shutil
+import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+DOWNLOAD_DIR = "/tmp"
+
+def rename_downloaded_file(download_dir):
+    try:
+        files = [f for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
+        files = [os.path.join(download_dir, f) for f in files]
+        newest_file = max(files, key=os.path.getctime)
+        current_hour = datetime.datetime.now().strftime("%H")
+        new_file_name = f"EXP-{current_hour}.csv"
+        new_file_path = os.path.join(download_dir, new_file_name)
+        if os.path.exists(new_file_path):
+            os.remove(new_file_path)
+        shutil.move(newest_file, new_file_path)
+        print(f"Arquivo salvo como: {new_file_path}")
+    except Exception as e:
+        print(f"Erro ao renomear o arquivo: {e}")
+
+def update_packing_google_sheets():
+    try:
+        current_hour = datetime.datetime.now().strftime("%H")
+        csv_file_name = f"EXP-{current_hour}.csv"
+        csv_folder_path = DOWNLOAD_DIR
+        csv_file_path = os.path.join(csv_folder_path, csv_file_name)
+        if not os.path.exists(csv_file_path):
+            print(f"Arquivo {csv_file_path} não encontrado.")
+            return
+        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_name("hxh.json", scope)
+        client = gspread.authorize(creds)
+        sheet1 = client.open_by_url("https://docs.google.com/spreadsheets/d/1hoXYiyuArtbd2pxMECteTFSE75LdgvA2Vlb6gPpGJ-g/edit?gid=0#gid=0")
+        worksheet1 = sheet1.worksheet("Base SPX")
+        df = pd.read_csv(csv_file_path)
+        df = df.fillna("")
+        worksheet1.clear()
+        worksheet1.update([df.columns.values.tolist()] + df.values.tolist())
+        print(f"Arquivo {csv_file_name} enviado com sucesso para a aba 'EXP'.")
+        time.sleep(5)
+    except Exception as e:
+        print(f"Erro durante o processo: {e}")
+
+async def main():
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080"])
+        context = await browser.new_context(accept_downloads=True, downloads_path=DOWNLOAD_DIR)
+        page = await context.new_page()
+        try:
+            # LOGIN
+            await page.goto("https://spx.shopee.com.br/")
+            await page.wait_for_selector('//*[@placeholder="Ops ID"]', timeout=15000)
+            await page.locator('//*[@placeholder="Ops ID"]').fill('Ops35683')
+            await page.locator('//*[@placeholder="Senha"]').fill('@Shopee123')
+            await page.locator('/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/form/div/div/button').click()
+            await page.wait_for_timeout(15000)
+            try:
+                await page.locator('.ssc-dialog-close').click(timeout=5000)
+            except:
+                print("Nenhum pop-up foi encontrado.")
+                await page.keyboard.press("Escape")
+            
+            # NAVEGAÇÃO E DOWNLOAD
+            await page.goto("https://spx.shopee.com.br/#/staging-area-management/list/outbound")
+            await page.wait_for_timeout(8000)
+            await page.locator('/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div/div/span/span/button').click()
+            await page.wait_for_timeout(8000)
+            await page.locator('/html[1]/body[1]/div[3]/ul[1]/li[1]/span[1]/div[1]/div[1]/span[1]').click()
+            await page.wait_for_timeout(8000)
+            await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
+            await page.wait_for_timeout(15000)
+
+            # Mantendo o XPATH original para clicar no botão de download
+            with page.expect_download() as download_info:
+                await page.locator('/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]').click()
+            download = await download_info.value
+            path = await download.path()
+            # Mover o arquivo baixado
+            current_hour = datetime.datetime.now().strftime("%H")
+            new_file_name = f"EXP-{current_hour}.csv"
+            new_file_path = os.path.join(DOWNLOAD_DIR, new_file_name)
+            if os.path.exists(new_file_path):
+                os.remove(new_file_path)
+            shutil.move(path, new_file_path)
+            print(f"Arquivo salvo como: {new_file_path}")
+
+            # Atualizar Google Sheets (opcional)
+            update_packing_google_sheets()
+            print("Dados atualizados com sucesso.")
+        except Exception as e:
+            print(f"Erro durante o processo: {e}")
+        finally:
+            await browser.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
