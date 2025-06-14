@@ -10,27 +10,22 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 DOWNLOAD_DIR = "/tmp"
 
-def rename_downloaded_file(download_dir):
+def rename_downloaded_file(download_dir, download_path):
     try:
-        files = [f for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
-        files = [os.path.join(download_dir, f) for f in files]
-        newest_file = max(files, key=os.path.getctime)
         current_hour = datetime.datetime.now().strftime("%H")
         new_file_name = f"EXP-{current_hour}.csv"
         new_file_path = os.path.join(download_dir, new_file_name)
         if os.path.exists(new_file_path):
             os.remove(new_file_path)
-        shutil.move(newest_file, new_file_path)
+        shutil.move(download_path, new_file_path)
         print(f"Arquivo salvo como: {new_file_path}")
+        return new_file_path
     except Exception as e:
         print(f"Erro ao renomear o arquivo: {e}")
+        return None
 
-def update_packing_google_sheets():
+def update_packing_google_sheets(csv_file_path):
     try:
-        current_hour = datetime.datetime.now().strftime("%H")
-        csv_file_name = f"EXP-{current_hour}.csv"
-        csv_folder_path = DOWNLOAD_DIR
-        csv_file_path = os.path.join(csv_folder_path, csv_file_name)
         if not os.path.exists(csv_file_path):
             print(f"Arquivo {csv_file_path} não encontrado.")
             return
@@ -43,7 +38,7 @@ def update_packing_google_sheets():
         df = df.fillna("")
         worksheet1.clear()
         worksheet1.update([df.columns.values.tolist()] + df.values.tolist())
-        print(f"Arquivo {csv_file_name} enviado com sucesso para a aba 'EXP'.")
+        print(f"Arquivo enviado com sucesso para a aba 'EXP'.")
         time.sleep(5)
     except Exception as e:
         print(f"Erro durante o processo: {e}")
@@ -52,7 +47,7 @@ async def main():
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080"])
-        context = await browser.new_context(accept_downloads=True, downloads_path=DOWNLOAD_DIR)
+        context = await browser.new_context(accept_downloads=True)
         page = await context.new_page()
         try:
             # LOGIN
@@ -82,19 +77,15 @@ async def main():
             with page.expect_download() as download_info:
                 await page.locator('/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]').click()
             download = await download_info.value
-            path = await download.path()
-            # Mover o arquivo baixado
-            current_hour = datetime.datetime.now().strftime("%H")
-            new_file_name = f"EXP-{current_hour}.csv"
-            new_file_path = os.path.join(DOWNLOAD_DIR, new_file_name)
-            if os.path.exists(new_file_path):
-                os.remove(new_file_path)
-            shutil.move(path, new_file_path)
-            print(f"Arquivo salvo como: {new_file_path}")
+            # Salvar o arquivo no diretório desejado
+            download_path = os.path.join(DOWNLOAD_DIR, download.suggested_filename)
+            await download.save_as(download_path)
+            new_file_path = rename_downloaded_file(DOWNLOAD_DIR, download_path)
 
             # Atualizar Google Sheets (opcional)
-            update_packing_google_sheets()
-            print("Dados atualizados com sucesso.")
+            if new_file_path:
+                update_packing_google_sheets(new_file_path)
+                print("Dados atualizados com sucesso.")
         except Exception as e:
             print(f"Erro durante o processo: {e}")
         finally:
