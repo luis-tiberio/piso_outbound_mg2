@@ -74,14 +74,15 @@ async def main():
             await page.wait_for_timeout(15000)
 
             # Clica no primeiro <span> com texto "Download"
-            print("Procurando e clicando no primeiro span com texto Download...")
-            await page.wait_for_selector('span:has-text("Download")', timeout=30000)
+            print("Aguardando botão Download visível...")
+            await page.wait_for_selector('button:has-text("Download")', timeout=60000)
+            print("Clicando no botão Download...")
             async with page.expect_download() as download_info:
-                await page.locator('span:has-text("Download")').first.click()
+                await page.locator('button:has-text("Download")').first.click()
             download = await download_info.value
             download_path = os.path.join(DOWNLOAD_DIR, download.suggested_filename)
             await download.save_as(download_path)
-            new_file_path = rename_downloaded_file(DOWNLOAD_DIR, download_path)
+            print("Download concluído!")
 
             # Atualizar Google Sheets (opcional)
             if new_file_path:
