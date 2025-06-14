@@ -52,10 +52,10 @@ async def main():
         try:
             # LOGIN
             await page.goto("https://spx.shopee.com.br/")
-            await page.wait_for_selector('//*[@placeholder="Ops ID"]', timeout=15000)
-            await page.locator('//*[@placeholder="Ops ID"]').fill('Ops35683')
-            await page.locator('//*[@placeholder="Senha"]').fill('@Shopee123')
-            await page.locator('xpath=/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/form/div/div/button/div').click()
+            await page.wait_for_selector('xpath=//*[@placeholder="Ops ID"]', timeout=15000)
+            await page.locator('xpath=//*[@placeholder="Ops ID"]').fill('Ops35683')
+            await page.locator('xpath=//*[@placeholder="Senha"]').fill('@Shopee123')
+            await page.locator('xpath=/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/form/div/div/button').click()
             await page.wait_for_timeout(15000)
             try:
                 await page.locator('.ssc-dialog-close').click(timeout=5000)
@@ -73,11 +73,10 @@ async def main():
             await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
             await page.wait_for_timeout(15000)
 
-            # Mantendo o XPATH original para clicar no botão de download
-            with page.expect_download() as download_info:
+            # Use async with para download
+            async with page.expect_download() as download_info:
                 await page.locator('xpath=/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]').click()
             download = await download_info.value
-            # Salvar o arquivo no diretório desejado
             download_path = os.path.join(DOWNLOAD_DIR, download.suggested_filename)
             await download.save_as(download_path)
             new_file_path = rename_downloaded_file(DOWNLOAD_DIR, download_path)
