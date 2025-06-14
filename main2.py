@@ -72,7 +72,7 @@ async def main():
             await page.wait_for_timeout(8000)
             await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
             await page.wait_for_timeout(15000)
-
+        """
             # Use async with para download
             async with page.expect_download() as download_info:
                 await page.locator('xpath=//*[@id="fms-container"]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/table[1]/tbody[2]/tr[1]/td[7]/div[1]/div[1]/button[1]/span[1]/span[1]').click()
@@ -80,7 +80,17 @@ async def main():
             download_path = os.path.join(DOWNLOAD_DIR, download.suggested_filename)
             await download.save_as(download_path)
             new_file_path = rename_downloaded_file(DOWNLOAD_DIR, download_path)
-
+        """
+                    # Clica no primeiro <span> com texto "Download"
+            print("Procurando e clicando no primeiro span com texto Download...")
+            await page.wait_for_selector('span:has-text("Download")', timeout=30000)
+            async with page.expect_download() as download_info:
+                await page.locator('span:has-text("Download")').first.click()
+            download = await download_info.value
+            download_path = os.path.join(DOWNLOAD_DIR, download.suggested_filename)
+            await download.save_as(download_path)
+            new_file_path = rename_downloaded_file(DOWNLOAD_DIR, download_path)
+        
             # Atualizar Google Sheets (opcional)
             if new_file_path:
                 update_packing_google_sheets(new_file_path)
