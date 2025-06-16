@@ -82,7 +82,7 @@ async def main():
     download_dir = "/tmp"
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch(headless=False)
             page = await browser.new_page()
             #await login(page)
             #await get_data(page, download_dir)
