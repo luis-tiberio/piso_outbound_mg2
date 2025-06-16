@@ -73,6 +73,17 @@ async def main():
             await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
             await page.wait_for_timeout(15000)
 
+
+            """
+            # Use async with para download
+            async with page.expect_download() as download_info:
+                await page.locator('xpath=//*[@id="fms-container"]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/table[1]/tbody[2]/tr[1]/td[7]/div[1]/div[1]/button[1]/span[1]/span[1]').click()
+            download = await download_info.value
+            download_path = os.path.join(DOWNLOAD_DIR, download.suggested_filename)
+            await download.save_as(download_path)
+            new_file_path = rename_downloaded_file(DOWNLOAD_DIR, download_path)
+            """
+            
             # Clica no primeiro <span> com texto "Download"
             await page.wait_for_selector('button.ssc-button.action-link', timeout=60000)
             buttons = await page.locator('button.ssc-button.action-link').all()
