@@ -70,15 +70,15 @@ async def main():
             await page.wait_for_timeout(8000)
             await page.locator('xpath=/html[1]/body[1]/div[3]/ul[1]/li[1]/span[1]/div[1]/div[1]/span[1]').click()
             await page.wait_for_timeout(8000)
-            await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
+            #await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
             await page.wait_for_timeout(15000)
 
 
             
             # Use async with para download
             async with page.expect_download() as download_info:
-                await page.wait_for_selector('xpath=/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[1]/div[8]/div/div[1]/div/div[2]/div[1]/div[1]/div[2]/div/div/div/table/tbody[2]/tr[1]/td[7]/div/div/button', timeout=30000)
-                await page.locator('xpath=/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[1]/div[8]/div/div[1]/div/div[2]/div[1]/div[1]/div[2]/div/div/div/table/tbody[2]/tr[1]/td[7]/div/div/button').click()
+                await page.wait_for_selector('xpath=/html/body/span/div/div[1]/div/span/div/div[2]/div[2]/div[1]/div/div[1]/div/div[1]/div[2]/button', timeout=30000)
+                await page.locator('xpath=/html/body/span/div/div[1]/div/span/div/div[2]/div[2]/div[1]/div/div[1]/div/div[1]/div[2]/button').click()
             download = await download_info.value
             download_path = os.path.join(DOWNLOAD_DIR, download.suggested_filename)
             await download.save_as(download_path)
