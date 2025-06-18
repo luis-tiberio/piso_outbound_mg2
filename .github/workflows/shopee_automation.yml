@@ -32,4 +32,4 @@ jobs:
           playwright install chromium
 
       - name: Executar o script
-        run: python main2.py
+        run: xvfb-run python main2.py
