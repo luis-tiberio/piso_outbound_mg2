@@ -72,7 +72,7 @@ async def main():
             # NAVEGAÇÃO E DOWNLOAD
             await page.goto("https://spx.shopee.com.br/#/staging-area-management/list/outbound")
             await page.wait_for_timeout(8000)
-            await page.locator('xpath=/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div/div/span/span/button').click()
+            await page.locator('xpath=/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]/span[1]/span[1]/button[1]').click()
             await page.wait_for_timeout(8000)
             await page.locator('xpath=/html[1]/body[1]/div[3]/ul[1]/li[1]/span[1]/div[1]/div[1]/span[1]').click()
             await page.wait_for_timeout(8000)
