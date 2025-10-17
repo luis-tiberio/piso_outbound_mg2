@@ -9,8 +9,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 DOWNLOAD_DIR = "/tmp"
-ops_id = os.getenv('OPS_ID')
-ops_senha = os.getenv('OPS_SENHA')
+ops_id = os.environ.get('OPS_ID')
+ops_senha = os.environ.get('OPS_SENHA')
 
 def rename_downloaded_file(download_dir, download_path):
     try:
@@ -55,6 +55,8 @@ async def main():
             # LOGIN
             await page.goto("https://spx.shopee.com.br/")
             await page.wait_for_selector('xpath=//*[@placeholder="Ops ID"]', timeout=15000)
+            if not ops_id or not ops_senha:
+                raise Exception("Erro: Variáveis de ambiente APP_USERNAME ou APP_PASSWORD não definidas.")
             await page.locator('xpath=//*[@placeholder="Ops ID"]').fill(ops_id)
             await page.locator('xpath=//*[@placeholder="Senha"]').fill(ops_senha)
             #await page.locator('xpath=//*[@placeholder="Ops ID"]').fill('Ops35683')
