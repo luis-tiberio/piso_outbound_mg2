@@ -9,6 +9,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 DOWNLOAD_DIR = "/tmp"
+ops_id = os.getenv('OPS_ID')
+ops_senha = os.getenv('OPS_SENHA')
 
 def rename_downloaded_file(download_dir, download_path):
     try:
@@ -32,13 +34,13 @@ def update_packing_google_sheets(csv_file_path):
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_name("hxh.json", scope)
         client = gspread.authorize(creds)
-        sheet1 = client.open_by_url("https://docs.google.com/spreadsheets/d/1hoXYiyuArtbd2pxMECteTFSE75LdgvA2Vlb6gPpGJ-g/edit?gid=0#gid=0")
+        sheet1 = client.open_by_url("https://docs.google.com/spreadsheets/d/1EFGq6mdiaDb9q-zOhY_ltU9ym86yH1hmkave9UuXu_Q/edit?gid=0#gid=0")
         worksheet1 = sheet1.worksheet("Base SPX")
         df = pd.read_csv(csv_file_path)
         df = df.fillna("")
         worksheet1.clear()
         worksheet1.update([df.columns.values.tolist()] + df.values.tolist())
-        print(f"Arquivo enviado com sucesso para a aba 'EXP'.")
+        print(f"Arquivo enviado com sucesso para a aba 'Base SPX'.")
         time.sleep(5)
     except Exception as e:
         print(f"Erro durante o processo: {e}")
@@ -53,8 +55,10 @@ async def main():
             # LOGIN
             await page.goto("https://spx.shopee.com.br/")
             await page.wait_for_selector('xpath=//*[@placeholder="Ops ID"]', timeout=15000)
-            await page.locator('xpath=//*[@placeholder="Ops ID"]').fill('Ops35683')
-            await page.locator('xpath=//*[@placeholder="Senha"]').fill('@Shopee123')
+            await page.locator('xpath=//*[@placeholder="Ops ID"]').fill(ops_id)
+            await page.locator('xpath=//*[@placeholder="Senha"]').fill(ops_senha)
+            #await page.locator('xpath=//*[@placeholder="Ops ID"]').fill('Ops35683')
+            #await page.locator('xpath=//*[@placeholder="Senha"]').fill('@Shopee123')
             await page.locator('xpath=/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/form/div/div/button').click()
             await page.wait_for_timeout(15000)
             try:
