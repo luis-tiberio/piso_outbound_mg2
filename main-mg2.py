@@ -59,8 +59,6 @@ async def main():
                 raise Exception("Erro: Variáveis de ambiente APP_USERNAME ou APP_PASSWORD não definidas.")
             await page.locator('xpath=//*[@placeholder="Ops ID"]').fill(ops_id)
             await page.locator('xpath=//*[@placeholder="Senha"]').fill(ops_senha)
-            #await page.locator('xpath=//*[@placeholder="Ops ID"]').fill('Ops35683')
-            #await page.locator('xpath=//*[@placeholder="Senha"]').fill('@Shopee123')
             await page.locator('xpath=/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/form/div/div/button').click()
             await page.wait_for_timeout(15000)
             try:
