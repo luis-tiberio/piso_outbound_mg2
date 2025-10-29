@@ -1,11 +1,14 @@
-name: Piso Exp
+name: Teste Piso 1
 
 on:
+  schedule:
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 jobs:
   run-script:
-    runs-on: ubuntu-22.04 # Mantemos a versão estável
+    # Usando a distro estável LTS
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout do código
@@ -15,9 +18,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
-      # Não precisamos mais desabilitar o IPv6
-      
+
+      # ==========================================================
+      # NOVO STEP PARA CORRIGIR O DNS (Temporary failure resolving)
+      # ==========================================================
+      - name: Corrigir DNS do Runner
+        run: |
+          echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf > /dev/null
+          echo "DNS fixado. Conteúdo de /etc/resolv.conf:"
+          cat /etc/resolv.conf
+
       - name: Restaurar hxh.json a partir do segredo
         run: |
           echo "$GCP_JSON_BASE64" | base64 -d > hxh.json
@@ -25,20 +35,32 @@ jobs:
         env:
           GCP_JSON_BASE64: ${{ secrets.GCP_JSON_BASE64 }}
 
-      - name: Instalar dependências Python
+      # ==========================================================
+      # Voltando para a "Solução 1", que é a correta,
+      # agora com o DNS corrigido.
+      # ==========================================================
+      - name: Instalar dependências e Navegador (com novo Host + Retry)
+        env:
+          # Força o download do CDN do Google
+          PLAYWRIGHT_DOWNLOAD_HOST: https://storage.googleapis.com
+          
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           
-      # ==========================================================
-      # NOVO STEP USANDO A ACTION OFICIAL
-      # (Substitui o 'playwright install')
-      # ==========================================================
-      - name: Instalar Navegador Playwright
-        uses: microsoft/playwright-github-action@v1
-        with:
-          # Instala somente o chromium e suas dependências
-          install-browsers: chromium 
+          # Lógica de Retry para garantir o download
+          max_attempts=5
+          attempt=1
+          until playwright install --with-deps chromium
+          do
+            echo "Falha no download (Tentativa $attempt/$max_attempts). Tentando novamente em 15 segundos..."
+            sleep 15
+            ((attempt++))
+            if [ $attempt -eq $max_attempts ]; then
+              echo "Falha ao instalar o navegador após $max_attempts tentativas."
+              exit 1
+            fi
+          done
 
       - name: Executar o script
         run: xvfb-run python main-mg2.py
