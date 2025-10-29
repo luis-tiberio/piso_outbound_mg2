@@ -1,0 +1,51 @@
+name: Piso Exp - Teste
+
+on:
+  workflow_dispatch:        # Permite execução manual
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # ==========================================================
+      # NOVO STEP ADICIONADO PARA CORRIGIR O ERRO DE REDE
+      # ==========================================================
+      - name: Desabilitar IPv6 (Correção de Rede ENETUNREACH)
+        run: |
+          sudo sh -c 'echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6'
+          sudo sh -c 'echo 1 > /proc/sys/net/ipv6/conf/default/disable_ipv6'
+
+      - name: Restaurar hxh.json a partir do segredo
+        run: |
+          echo "$GCP_JSON_BASE64" | base64 -d > hxh.json
+        shell: bash
+        env:
+          GCP_JSON_BASE64: ${{ secrets.GCP_JSON_BASE64 }}
+
+      # ==========================================================
+      # STEP DE DEPENDÊNCIAS MODIFICADO
+      # ==========================================================
+      - name: Instalar dependências e Navegador
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+          # COMANDO CORRIGIDO:
+          # Adiciona --with-deps para instalar as bibliotecas do Linux
+          # necessárias para o Chromium rodar no servidor.
+          playwright install --with-deps chromium
+
+      - name: Executar o script
+        run: xvfb-run python main-mg2.py
+        env:
+          OPS_ID: ${{ secrets.OPS_ID }}
+          OPS_SENHA: ${{ secrets.OPS_SENHA }}
