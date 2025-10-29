@@ -1,0 +1,64 @@
+name: Piso Exp
+
+on:
+  schedule:
+    # O cron '*/10 * * * *' executa a cada 10 minutos
+    - cron: '*/10 * * * *'  
+  workflow_dispatch:        # Permite execução manual
+
+jobs:
+  run-script:
+    # Mudando para a distro estável LTS (Long-Term Support)
+    # Isso evita os problemas de rede/DNS do ubuntu-latest (24.04)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Restaurar hxh.json a partir do segredo
+        run: |
+          echo "$GCP_JSON_BASE64" | base64 -d > hxh.json
+        shell: bash
+        env:
+          GCP_JSON_BASE64: ${{ secrets.GCP_JSON_BASE64 }}
+
+      # ==========================================================
+      # INÍCIO DO STEP MODIFICADO (SOLUÇÃO 1)
+      # ==========================================================
+      - name: Instalar dependências e Navegador (com novo Host)
+        # Força o Playwright a baixar do CDN do Google em vez do Azure
+        env:
+          PLAYWRIGHT_DOWNLOAD_HOST: https://storage.googleapis.com
+          
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+          # Lógica de Retry para garantir o download
+          max_attempts=5
+          attempt=1
+          until playwright install --with-deps chromium
+          do
+            echo "Falha no download (Tentativa $attempt/$max_attempts). Tentando novamente em 15 segundos..."
+            sleep 15
+            ((attempt++))
+            if [ $attempt -eq $max_attempts ]; then
+              echo "Falha ao instalar o navegador após $max_attempts tentativas."
+              exit 1
+            fi
+          done
+      # ==========================================================
+      # FIM DO STEP MODIFICADO
+      # ==========================================================
+
+      - name: Executar o script
+        run: xvfb-run python main-mg2.py
+        env:
+          OPS_ID: ${{ secrets.OPS_ID }}
+          OPS_SENHA: ${{ secrets.OPS_SENHA }}
